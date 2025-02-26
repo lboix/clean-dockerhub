@@ -1,0 +1,25 @@
+variables:
+  CI_REGISTRY_USERNAME: your-registry-username
+  CI_REGISTRY_PASSWORD : your-registry-password
+  CI_REGISTRY_REPO : your-registry-repo
+
+stages:
+  - test
+  - build
+
+image: docker:latest
+before_script:
+  - docker login -u "${CI_REGISTRY_USERNAME}" -p "${CI_REGISTRY_PASSWORD}"
+
+test:
+  stage: test
+  script:
+    - docker build --pull -f Dockerfile -t ${CI_REGISTRY_REPO}/clean-dockerhub:wip .
+    - docker push ${CI_REGISTRY_REPO}/clean-dockerhub:wip
+
+build:
+  stage: build
+  when: manual
+  script:
+    - docker build --pull -f Dockerfile -t ${CI_REGISTRY_REPO}/clean-dockerhub:latest .
+    - docker push ${CI_REGISTRY_REPO}/clean-dockerhub:latest
