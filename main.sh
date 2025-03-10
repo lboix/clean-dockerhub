@@ -17,7 +17,8 @@ if [ -z $DOCKERHUB_NAMESPACE ]; then
 fi
 
 DOCKERHUB_API="https://hub.docker.com/v2"
-REPO_PREFIXES="webapp-" #if you want to add new ones, syntax will be "webapp-|api-|microservice-" etc.
+REPO_PREFIXES="^(webapp-)" #if you want to add new ones, syntax will be "^(webapp-|api-|microservice-)" etc.
+
 
 refresh_token() {
 
@@ -121,7 +122,7 @@ list_repos() {
     echo "$repos" | while read -r repo; do
       local repo_name=$(echo "$repo" | jq -r .name)
 
-      if [[ "$repo_name" =~ ^"$REPO_PREFIXES" ]]; then
+      if [[ "$repo_name" =~ $REPO_PREFIXES ]]; then
         echo "Repo [$repo_name] found"
         clean_repo_manifests "$namespace" "$repo_name"
       else
