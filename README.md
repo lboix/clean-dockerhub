@@ -8,6 +8,7 @@ You can easily adapt this code to create your customized image that you will be 
 ## Rules hardcoded in the current script
 - it will only clean the repos starting with *webapp-* (you can tune it using the *REPO_PREFIXES* variable)
 - it can not clean more than 100 manifests in a repo in a run, as currently the */manifests* endpoint provided by the DockerHub API does not handle pagination (no "next" URL returned)
+  - note: this feature request have been submitted [here](https://github.com/docker/roadmap/issues/795), and the script will automatically adapt if one day this "next" URL is returned 
 - if a manifest is tagged with word *latest* or *backup* it will be ignored (you can tune it at line 74)
 - if a manifest has not been pulled since 1 month, it will be deleted (you can tune it at line 83)
 - if a manifest has never been pulled, it will be deleted
