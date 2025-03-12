@@ -19,7 +19,6 @@ fi
 DOCKERHUB_API="https://hub.docker.com/v2"
 REPO_PREFIXES="^(webapp-)" #if you want to add new ones, syntax will be "^(webapp-|api-|microservice-)" etc.
 
-
 refresh_token() {
 
   TOKEN=$(curl -s -X POST "$DOCKERHUB_API/users/login/" \
@@ -49,17 +48,18 @@ clean_repo_manifests() {
   local namespace=$1
   local repository=$2
 
-  local list_repo_manifests_url="$DOCKERHUB_API/namespaces/$namespace/repositories/$repository/manifests"
+  local list_repo_manifests_url="$DOCKERHUB_API/namespaces/$namespace/repositories/$repository/manifests?last_evaluated_key="
+  local last_evaluated_key=""
 
-  while [ -n "$list_repo_manifests_url" ]; do
+  while [ -n "${list_repo_manifests_url}${last_evaluated_key}" ]; do
 
-    if [[ "$list_repo_manifests_url" == "null" ]]; then
+    if [[ "$last_evaluated_key" == "null" ]]; then
       return
     fi
 
-    echo "Calling URL [$list_repo_manifests_url]"
+    echo "Calling URL [${list_repo_manifests_url}${last_evaluated_key}]"
 
-    local response=$(curl -s -X GET "$list_repo_manifests_url" -H "Authorization: JWT $TOKEN")
+    local response=$(curl -s -X GET "${list_repo_manifests_url}${last_evaluated_key}" -H "Authorization: JWT $TOKEN")
     if [[ "$response" == *"httperror 404"* ]]; then
       exit
     fi
@@ -86,18 +86,18 @@ clean_repo_manifests() {
         if [ "$manifest_last_pulled_date" -lt "$one_month_ago_date" ]; then
 
             echo "Manifest [$manifest_digest] found, last pull was [$manifest_last_pulled] : to delete (last pull > 1 month ago)"
-            delete_digest "$DOCKERHUB_NAMESPACE" $repository "$manifest_digest"
+            delete_digest $namespace $repository "$manifest_digest"
           else
 
             echo "Manifest [$manifest_digest] found, last pull was [$manifest_last_pulled] : to keep (last pull < 1 month ago)"
           fi
       else
         echo "Manifest [$manifest_digest] found, last pull was [$manifest_last_pulled] : to delete (never pulled)"
-        delete_digest "$DOCKERHUB_NAMESPACE" $repository "$manifest_digest"
+        delete_digest $namespace $repository "$manifest_digest"
       fi
     done
 
-    list_repo_manifests_url=$(echo "$response" | jq -r .next)
+    last_evaluated_key=$(echo "$response" | jq -r .last_evaluated_key)
     sleep 5
   done
 }
