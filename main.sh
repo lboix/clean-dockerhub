@@ -40,6 +40,10 @@ delete_digest() {
     echo "Manifest [$digest] deleted!"
   else
     echo "Error when deleting manifest [$digest] : returned HTTP code was [$response_code]"
+
+    if [ "$response_code" -eq 401 ]; then
+      refresh_token
+    fi
   fi
 }
 
